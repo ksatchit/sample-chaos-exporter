@@ -22,8 +22,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/ksatchit/sample-chaos-operator/pkg/exec"
-	"github.com/ksatchit/sample-chaos-operator/pkg/util"
+	"github.com/ksatchit/sample-chaos-exporter/pkg/exec"
+	"github.com/ksatchit/sample-chaos-exporter/pkg/util"
 )
 
 // KubectlFile is the type to hold various yaml file paths

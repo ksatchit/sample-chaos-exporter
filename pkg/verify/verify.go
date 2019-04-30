@@ -22,7 +22,7 @@ import (
 	"strings"
 
 	"github.com/ghodss/yaml"
-	"github.com/ksatchit/sample-chaos-operator/pkg/kubectl"
+	"github.com/ksatchit/sample-chaos-exporter/pkg/kubectl"
 )
 
 // VerifyFile type defines a yaml file path that represents an installation
