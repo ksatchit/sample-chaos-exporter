@@ -1,0 +1,38 @@
+# HELP chaos_engine_experiment_count Total number of experiments executed by the chaos engine
+# TYPE chaos_engine_experiment_count gauge
+chaos_engine_experiment_count{app_uid="3f2092f8-6400-11e9-905f-42010a800131"} 12
+# HELP chaos_engine_failed_experiments Total number of failed experiments
+# TYPE chaos_engine_failed_experiments gauge
+chaos_engine_failed_experiments{app_uid="3f2092f8-6400-11e9-905f-42010a800131"} 5
+# HELP chaos_engine_passed_experiments Total number of passed experiments
+# TYPE chaos_engine_passed_experiments gauge
+chaos_engine_passed_experiments{app_uid="3f2092f8-6400-11e9-905f-42010a800131"} 7
+# HELP chaos_experiment_container_kill_status Status of container kill experiment
+# TYPE chaos_experiment_container_kill_status gauge
+chaos_experiment_container_kill_status{app_uid="3f2092f8-6400-11e9-905f-42010a800131"} 2
+# HELP chaos_experiment_container_network_delay_status Status of container network delay experiment
+# TYPE chaos_experiment_container_network_delay_status gauge
+chaos_experiment_container_network_delay_status{app_uid="3f2092f8-6400-11e9-905f-42010a800131"} 1
+# HELP chaos_experiment_container_packet_loss_status Status of container packet loss experiment
+# TYPE chaos_experiment_container_packet_loss_status gauge
+chaos_experiment_container_packet_loss_status{app_uid="3f2092f8-6400-11e9-905f-42010a800131"} 0
+# HELP chaos_experiment_pod_failure_status Status of pod failure experiment
+# TYPE chaos_experiment_pod_failure_status gauge
+chaos_experiment_pod_failure_status{app_uid="3f2092f8-6400-11e9-905f-42010a800131"} 3
+# HELP go_gc_duration_seconds A summary of the GC invocation durations.
+# TYPE go_gc_duration_seconds summary
+go_gc_duration_seconds{quantile="0"} 2.5785e-05
+go_gc_duration_seconds{quantile="0.25"} 3.2723e-05
+go_gc_duration_seconds{quantile="0.5"} 3.9882e-05
+go_gc_duration_seconds{quantile="0.75"} 4.82e-05
+go_gc_duration_seconds{quantile="1"} 0.000131313
+go_gc_duration_seconds_sum 0.000277903
+go_gc_duration_seconds_count 5
+# HELP go_goroutines Number of goroutines that currently exist.
+# TYPE go_goroutines gauge
+go_goroutines 7
+# HELP go_info Information about the Go environment.
+# TYPE go_info gauge
+go_info{version="go1.12.4"} 1
+# HELP go_memstats_alloc_bytes Number of bytes allocated and still in use.
+# TYPE go_memstats_alloc_bytes gauge
