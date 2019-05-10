@@ -22,10 +22,18 @@ TODO: Implement the client-go logic to extract the desired info from CR
      d. container_packet_loss
 */
 
+import "os"
+import "flag"
+import "fmt"
+import "log"
+import "path/filepath"
+import "k8s.io/client-go/util/homedir"
+import "k8s.io/client-go/tools/clientcmd"
 import "github.com/prometheus/client_golang/prometheus"
+import "github.com/ksatchit/sample-chaos-exporter/pkg/util/scrapeCR"
 
-const application_uuid = "3f2092f8-6400-11e9-905f-42010a800131"
-const chaosEngineName = "engine-nginx"
+const application_uuid = os.Getenv("APP_UUID")
+const chaosengine = os.Getenv("CHAOSENGINE")
 
 var (
     experimentsTotal = prometheus.NewGaugeVec(prometheus.GaugeOpts{
@@ -93,23 +101,57 @@ var (
 )
 
 func init() {
+
+        // Get cluster configuration
+        var kubeconfig *string 
+
+        if home := homedir.HomeDir(); home != ""  {
+                kubeconfig = flag.String("kubeconfig", filepath.Join(home, ".kube", "config"), "(optional) path to the kubeconfig file")
+        } else {
+               kubeconfig = flag.String("kubeconfig", "", "absolute path to the kubeconfig file")
+        }
+
+        flag.Parse()
+
+        var config *rest.Config
+        var err error
+
+        if *kubeconfig == "" {
+               log.Printf("using the in-cluster config")
+               config, err = rest.InClusterConfig()
+        } else {
+               log.Printf("using configuration from '%s'", *kubeconfig)
+               config, err = clientcmd.BuildConfigFromFlags("", *kubeconfig)
+        }
+
+        if err != nil {
+                panic(err.Error())
+        }
+
+        if chaosengine == "" || application_uuid == "" {
+               log.Printf("ERROR: please specify correct ENVs, exiting")
+               os.Exit(1)
+        }
+
+        expTotal, passTotal, failTotal, expMap, err := scrapeCR.GetChaosMetrics(config, chaosengine)
+
 	prometheus.MustRegister(experimentsTotal)
 	prometheus.MustRegister(passedExperiments)
 	prometheus.MustRegister(failedExperiments)
-	prometheus.MustRegister(podFailureStatus)
-	prometheus.MustRegister(containerKillStatus)
-	prometheus.MustRegister(containerNetworkDelay)
-	prometheus.MustRegister(containerPacketLoss)
+	//prometheus.MustRegister(podFailureStatus)
+	//prometheus.MustRegister(containerKillStatus)
+	//prometheus.MustRegister(containerNetworkDelay)
+	//prometheus.MustRegister(containerPacketLoss)
 
 
         // Set default metrics for debug purposes
-        experimentsTotal.WithLabelValues(application_uuid).Set(12)
-        passedExperiments.WithLabelValues(application_uuid).Set(7)
-        failedExperiments.WithLabelValues(application_uuid).Set(5)
-        podFailureStatus.WithLabelValues(application_uuid).Set(3) //pass
-        containerKillStatus.WithLabelValues(application_uuid).Set(2) //fail
-        containerNetworkDelay.WithLabelValues(application_uuid).Set(1) //running 
-        containerPacketLoss.WithLabelValues(application_uuid).Set(0) //not-started
+        experimentsTotal.WithLabelValues(application_uuid).Set(expTotal)
+        passedExperiments.WithLabelValues(application_uuid).Set(passTotal)
+        failedExperiments.WithLabelValues(application_uuid).Set(failTotal)
+        //podFailureStatus.WithLabelValues(application_uuid).Set(3) //pass
+        //containerKillStatus.WithLabelValues(application_uuid).Set(2) //fail
+        //containerNetworkDelay.WithLabelValues(application_uuid).Set(1) //running 
+        //containerPacketLoss.WithLabelValues(application_uuid).Set(0) //not-started
 
 }
 
