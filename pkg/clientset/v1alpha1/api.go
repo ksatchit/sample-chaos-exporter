@@ -11,6 +11,7 @@ import (
 
 type ExampleV1Alpha1Interface interface {
 	ChaosEngines(namespace string) ChaosEngineInterface
+        ChaosResults(namespace string) ChaosResultInterface
 }
 
 type ExampleV1Alpha1Client struct {
@@ -34,6 +35,13 @@ func NewForConfig(c *rest.Config) (*ExampleV1Alpha1Client, error) {
 
 func (c *ExampleV1Alpha1Client) ChaosEngines(namespace string) ChaosEngineInterface {
 	return &chaosEngineClient{
+		restClient: c.restClient,
+		ns:         namespace,
+	}
+}
+
+func (c *ExampleV1Alpha1Client) ChaosResults(namespace string) ChaosResultInterface {
+	return &chaosResultClient{
 		restClient: c.restClient,
 		ns:         namespace,
 	}

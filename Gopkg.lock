@@ -171,14 +171,14 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:598bf44d2b43100f8f20da42428e65d2353b0ce390ce80671d4ba2ba653d4f8d"
+  digest = "1:5b2f384069bc4bac9bffedacc7becf0900f209ed00a33487b046ed00a2dc8597"
   name = "github.com/litmuschaos/chaos-operator"
   packages = [
     "pkg/apis",
     "pkg/apis/litmuschaos/v1alpha1",
   ]
   pruneopts = "UT"
-  revision = "3ecb5fefc05d77d19b9925fa51e8680833b1696d"
+  revision = "0dbbe5a595622906a2f50eeadbe9186a905c597c"
 
 [[projects]]
   branch = "master"
