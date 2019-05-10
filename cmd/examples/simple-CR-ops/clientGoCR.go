@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
         "os"
-        //"strings"
         "path/filepath"
         "k8s.io/client-go/util/homedir"
         "k8s.io/client-go/tools/clientcmd"
@@ -17,10 +16,18 @@ import (
         clientV1alpha1 "github.com/ksatchit/sample-chaos-exporter/pkg/clientset/v1alpha1"
 )
 
+/* Define Variables */
+
 var kubeconfig *string
 var chaosengine *string
 var chaosexperimentlist []string
 var chaosresultmap map[string]string
+var totalExpCount, totalPassedExp, totalFailedExp int
+
+/* Init function to obtain:
+   (a) Cluster Config Path as Arg
+   (b) ChaosEngine Name as Arg
+*/
 
 func init() {
         if home := homedir.HomeDir(); home != ""  {
@@ -32,6 +39,13 @@ func init() {
         chaosengine = flag.String("chaosengine", "", "name of the chaosengine")
         flag.Parse()
 }
+
+/* Main function to derive chaos metrics for a given engine:
+     (a) totalExpCount: Total Number of Experiments 
+     (b) passedExpCount: Number of Passed Experiments
+     (c) failedExpCount: Number of Failed Experiments
+     (d) <exp>Verdict: Individual Experiment Status {0-notstarted, 1-running, 2-fail, 3-pass}
+*/
 
 func main() {
 
@@ -59,60 +73,58 @@ func main() {
 
 	clientSet, err := clientV1alpha1.NewForConfig(config)
 	if err != nil {
-		panic(err)
+		err.Error()
 	}
 
-        //TODO: Handle cases where the resources are not present
+        //TODO: Handle cases where the resources are not present. Currently, it panics 
         //TODO: Obtain/derive namespace of resources. Hardcoded to "default"
+        //TODO: Update the chaosresult to carry verdict alone. Status & Verdict are redundant
+        //TODO: Ensure there are chaosresult CRs applied w/ charts (verdict: notstarted) 
 
 	//engines, err := clientSet.ChaosEngines("default").List(metav1.ListOptions{})
 	engine, err := clientSet.ChaosEngines("default").Get(*chaosengine, metav1.GetOptions{})
 	if err != nil {
-		panic(err)
+		err.Error()
 	}
 
-        //result, err:= clientSet.ChaosResults("default").List(metav1.ListOptions{})
-        //if err != nil {
-        //        panic(err)
-        //}
-
+        /////////////////////////////////////////////////
         /*METRIC*/
-	fmt.Printf("No of chaos exp: %+v\n", len(engine.Spec.Experiments))
-        fmt.Printf("------------------------\n")
+        totalExpCount = len(engine.Spec.Experiments)  //
+        /////////////////////////////////////////////////
 
         for _, element:= range engine.Spec.Experiments{
             // fmt.Println(index, "=>", element.Name)
             chaosexperimentlist = append(chaosexperimentlist, element.Name)
         }
-        fmt.Printf("List of chaos experiments: %+v\n", chaosexperimentlist)
-        fmt.Printf("------------------------\n")
+
+        // Initialize the chaosresult map before entering loop
+        chaosresultmap := make(map[string]string)
 
         for _, test:= range chaosexperimentlist{
             chaosresultname := fmt.Sprintf("%s-%s", *chaosengine, test)
-            testresult, err:= clientSet.ChaosResults("default").Get(chaosresultname, metav1.GetOptions{})
+            testresultdump, err:= clientSet.ChaosResults("default").Get(chaosresultname, metav1.GetOptions{})
+            result := testresultdump.Spec.ExperimentStatus.Verdict
             if err != nil {
-                   //err.Error() 
-                   //testresult = "0" //result not available, mapped to "not-started"
-                   //fmt.Println(err.Error())
-                   fmt.Printf("experiment %s has not started", test)
+                   err.Error()
             }
 
-            fmt.Printf("result for %+v is %+v\n", chaosresultname, testresult.Spec.ExperimentStatus.Verdict)
-            chaosresultmap["chaosresultname"] = testresult.Spec.ExperimentStatus.Verdict
+            chaosresultmap[chaosresultname] = result
         }
 
-        //fmt.Printf("List of chaos results: %v\n", result)
+        pcount, fcount := 0, 0
+        for _, verdict := range chaosresultmap{
+            if verdict == "pass" {
+                   pcount++
+            } else if verdict == "fail" {
+                   fcount++
+            }
+        }
 
+        /////////////////////////////////////////////////
+        /*METRIC*/                                     //
+        totalPassedExp = pcount                        //
+        totalFailedExp = fcount                        //
+        /////////////////////////////////////////////////
 
-
-        /*
-	store := WatchResources(clientSet)
-
-	for {
-		projectsFromStore := store.List()
-		fmt.Printf("project in store: %d\n", len(projectsFromStore))
-
-		time.Sleep(2 * time.Second)
-	}
-        */
+        fmt.Printf("%d %d %d\n", totalExpCount, totalPassedExp, totalFailedExp)
 }
