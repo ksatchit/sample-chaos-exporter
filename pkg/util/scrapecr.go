@@ -18,11 +18,26 @@ import (
 */
 
 // Define Variables 
-
 var chaosexperimentlist []string
 var chaosresultmap map[string]string
+var statusmap map[string]float64
 
-func GetChaosMetrics(cfg *rest.Config, cEngine string)(totalExpCount, totalPassedExp, totalFailedExp float64, rMap map[string]string, err error){
+var numericstatus = map[string]float64{
+         "not-executed": 0,
+         "running":      1,
+         "fail":         2,
+         "pass":         3,
+}
+
+func statusConv (expstatus string)(numeric float64){
+         if numeric, ok := numericstatus[expstatus]; ok {
+            return numeric
+            fmt.Printf("%v", numeric)
+         }
+         return 127
+}
+
+func GetChaosMetrics(cfg *rest.Config, cEngine string)(totalExpCount, totalPassedExp, totalFailedExp float64, rMap map[string]float64, err error){
 
 	v1alpha1.AddToScheme(scheme.Scheme)
 
@@ -44,10 +59,10 @@ func GetChaosMetrics(cfg *rest.Config, cEngine string)(totalExpCount, totalPasse
                 return 0, 0, 0, nil, err
 	}
 
-        /////////////////////////////////////////////////
+        /////////////////////////////////////////////////////////
         /*METRIC*/
         totalExpCount = float64(len(engine.Spec.Experiments))  //
-        /////////////////////////////////////////////////
+        /////////////////////////////////////////////////////////
 
         for _, element:= range engine.Spec.Experiments{
             // fmt.Println(index, "=>", element.Name)
@@ -83,7 +98,15 @@ func GetChaosMetrics(cfg *rest.Config, cEngine string)(totalExpCount, totalPasse
         totalPassedExp = float64(pcount)               //
         totalFailedExp = float64(fcount)               //
         /////////////////////////////////////////////////
-
         fmt.Printf("%+v %+v %+v\n", totalExpCount, totalPassedExp, totalFailedExp)
-        return totalExpCount, totalPassedExp, totalFailedExp, chaosresultmap, nil
+
+        //Map verdict to numerical values {0-notstarted, 1-running, 2-fail, 3-pass}
+        statusmap := make(map[string]float64)
+        for index, status := range chaosresultmap{
+            val := statusConv(status)
+            statusmap[index] = val
+        }
+        fmt.Printf("%+v\n", statusmap)
+
+        return totalExpCount, totalPassedExp, totalFailedExp, statusmap, nil
 }

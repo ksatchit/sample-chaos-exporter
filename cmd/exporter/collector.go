@@ -6,7 +6,6 @@ TODO: Freeze upon the default experiment list across chaos engines
 TODO: Pass the application UUID as ENV to exporter container
 TODO: Pass the chaosengine name as ENV to exporter container
 TODO: Implement the logic to update status from controller on chaosengine CR 
-TODO: Implement the client-go logic to extract the desired info from CR
 */
 
 /* The chaos exporter collects and exposes the following metrics:
@@ -14,7 +13,7 @@ TODO: Implement the client-go logic to extract the desired info from CR
    # Total Number of ChaosExperiments
    # Total Number of PassedExperiments 
    # Total Number of FailedExperiments
-   # Status of following experiments:
+   # Status of engine's experiments, such as:
  
      a. pod_failure
      b. container_kill
@@ -25,8 +24,9 @@ TODO: Implement the client-go logic to extract the desired info from CR
 import (
         "os"
         "flag"
-        "fmt"
+        // "fmt"
         "log"
+        "strings"
         "path/filepath"
         "k8s.io/client-go/util/homedir"
         "k8s.io/client-go/tools/clientcmd"
@@ -37,7 +37,7 @@ import (
 
 var (
     experimentsTotal = prometheus.NewGaugeVec(prometheus.GaugeOpts{
-        Namespace: "chaos",
+        Namespace: "c",
         Subsystem: "engine",
         Name:      "experiment_count",
         Help:      "Total number of experiments executed by the chaos engine",
@@ -46,7 +46,7 @@ var (
     )
 
     passedExperiments = prometheus.NewGaugeVec(prometheus.GaugeOpts{
-        Namespace: "chaos",
+        Namespace: "c",
         Subsystem: "engine",
         Name:      "passed_experiments",
         Help:      "Total number of passed experiments",
@@ -55,7 +55,7 @@ var (
     )
 
     failedExperiments = prometheus.NewGaugeVec(prometheus.GaugeOpts{
-        Namespace: "chaos",
+        Namespace: "c",
         Subsystem: "engine",
         Name:      "failed_experiments",
         Help:      "Total number of failed experiments",
@@ -63,41 +63,6 @@ var (
     []string{"app_uid"},
     )
 
-    podFailureStatus = prometheus.NewGaugeVec(prometheus.GaugeOpts{
-        Namespace: "chaos",
-        Subsystem: "experiment",
-        Name:      "pod_failure_status",
-        Help:      "Status of pod failure experiment",
-    },
-    []string{"app_uid"},
-    )
-
-   containerKillStatus = prometheus.NewGaugeVec(prometheus.GaugeOpts{
-        Namespace: "chaos",
-        Subsystem: "experiment",
-        Name:      "container_kill_status",
-        Help:      "Status of container kill experiment",
-    },
-    []string{"app_uid"},
-    )
-
-   containerNetworkDelay = prometheus.NewGaugeVec(prometheus.GaugeOpts{
-        Namespace: "chaos",
-        Subsystem: "experiment",
-        Name:      "container_network_delay_status",
-        Help:      "Status of container network delay experiment",
-    },
-    []string{"app_uid"},
-    )
-
-   containerPacketLoss = prometheus.NewGaugeVec(prometheus.GaugeOpts{
-        Namespace: "chaos",
-        Subsystem: "experiment",
-        Name:      "container_packet_loss_status",
-        Help:      "Status of container packet loss experiment",
-    },
-    []string{"app_uid"},
-    )
 )
 
 func init() {
@@ -142,26 +107,31 @@ func init() {
                 panic(err.Error())
         }
 
-        fmt.Printf("%s", expMap)
+        for index, verdict := range expMap{
+              sanitized_exp_name := strings.Replace(index, "-", "_", -1)
+
+              var (
+                  tmpExp = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+                      Namespace: "c",
+                      Subsystem: "exp",
+                      Name:      sanitized_exp_name,
+                      Help: "",
+                  },
+                  []string{"app_uid"},
+                  )
+              )
+
+              prometheus.MustRegister(tmpExp)
+              tmpExp.WithLabelValues(app_uuid).Set(verdict)
+        }
 
 	prometheus.MustRegister(experimentsTotal)
 	prometheus.MustRegister(passedExperiments)
 	prometheus.MustRegister(failedExperiments)
-	//prometheus.MustRegister(podFailureStatus)
-	//prometheus.MustRegister(containerKillStatus)
-	//prometheus.MustRegister(containerNetworkDelay)
-	//prometheus.MustRegister(containerPacketLoss)
 
-
-        // Set default metrics for debug purposes
         experimentsTotal.WithLabelValues(app_uuid).Set(expTotal)
         passedExperiments.WithLabelValues(app_uuid).Set(passTotal)
         failedExperiments.WithLabelValues(app_uuid).Set(failTotal)
-        //podFailureStatus.WithLabelValues(app_uuid).Set(3) //pass
-        //containerKillStatus.WithLabelValues(app_uuid).Set(2) //fail
-        //containerNetworkDelay.WithLabelValues(app_uuid).Set(1) //running 
-        //containerPacketLoss.WithLabelValues(app_uuid).Set(0) //not-started
-
 }
 
 
