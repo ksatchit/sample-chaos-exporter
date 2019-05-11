@@ -26,8 +26,6 @@ import (
     // "fmt"
     "log"
     "strings"
-    "path/filepath"
-    "k8s.io/client-go/util/homedir"
     "k8s.io/client-go/tools/clientcmd"
     "k8s.io/client-go/rest"
     "github.com/prometheus/client_golang/prometheus"
@@ -43,7 +41,7 @@ functions approach used in other standard exporters*/
 func init() {
 
     // Declare general variables (cluster ops, error handling, misc) 
-    var kubeconfig *string
+    var kubeconfig string
     var config *rest.Config
     var err error
 
@@ -82,23 +80,16 @@ func init() {
 
     )
 
-    // Get cluster config from default location 
-    if home := homedir.HomeDir(); home != ""  {
-        kubeconfig = flag.String("kubeconfig", filepath.Join(home, ".kube", "config"), "(optional) path to the kubeconfig file")
-    } else {
-        // Get cluster config from a non-standard path passed as arg
-        kubeconfig = flag.String("kubeconfig", "", "absolute path to the kubeconfig file")
-    }
-
+    flag.StringVar(&kubeconfig, "kubeconfig", "", "path to the kubeconfig file")
     flag.Parse()
 
     // Use in-cluster config if kubeconfig file not available
-    if *kubeconfig == "" {
+    if kubeconfig == "" {
         log.Printf("using the in-cluster config")
         config, err = rest.InClusterConfig()
     } else {
-        log.Printf("using configuration from '%s'", *kubeconfig)
-        config, err = clientcmd.BuildConfigFromFlags("", *kubeconfig)
+        log.Printf("using configuration from '%s'", kubeconfig)
+        config, err = clientcmd.BuildConfigFromFlags("", kubeconfig)
     }
 
     if err != nil {
