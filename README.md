@@ -29,7 +29,7 @@
 - If the experiments are not executed, apply the ChaosResult CRs manually 
   - For CR spec, see: https://github.com/litmuschaos/chaos-operator/blob/master/deploy/crds/chaosresult.yaml
 
-- Run the exporter container (ksatchit/sample-chaos-exporter:trial) on host network. It is necessary to mount the kubeconfig
+- Run the exporter container (ksatchit/sample-chaos-exporter:ci) on host network. It is necessary to mount the kubeconfig
   & override entrypoint w/ `./exporter -kubeconfig <path>`
 
 - Execute `curl 127.0.0.1:8080/metrics` to view metrics
