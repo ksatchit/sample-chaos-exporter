@@ -16,6 +16,7 @@ spec:
       labels:
         app: chaos-exporter 
     spec:
+      serviceAccountName: chaos-operator
       containers:
       - name: chaos-exporter
         image: ksatchit/sample-chaos-exporter:ci 
