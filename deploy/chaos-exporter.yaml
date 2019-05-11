@@ -19,6 +19,14 @@ spec:
       containers:
       - name: chaos-exporter
         image: ksatchit/sample-chaos-exporter:ci 
+        imagePullPolicy: Always
+        env:
+          - name: CHAOSENGINE
+            value: engine-nginx
+
+          - name: APP_UUID
+            value: "3f2092f8-6400-11e9-905f-42010a800131" 
+ 
         ports:
         - containerPort: 8080
 ---
