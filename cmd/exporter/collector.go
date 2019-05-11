@@ -22,18 +22,18 @@ TODO: Implement the client-go logic to extract the desired info from CR
      d. container_packet_loss
 */
 
-import "os"
-import "flag"
-import "fmt"
-import "log"
-import "path/filepath"
-import "k8s.io/client-go/util/homedir"
-import "k8s.io/client-go/tools/clientcmd"
-import "github.com/prometheus/client_golang/prometheus"
-import "github.com/ksatchit/sample-chaos-exporter/pkg/util/scrapeCR"
-
-const application_uuid = os.Getenv("APP_UUID")
-const chaosengine = os.Getenv("CHAOSENGINE")
+import (
+        "os"
+        "flag"
+        "fmt"
+        "log"
+        "path/filepath"
+        "k8s.io/client-go/util/homedir"
+        "k8s.io/client-go/tools/clientcmd"
+        "k8s.io/client-go/rest"
+        "github.com/prometheus/client_golang/prometheus"
+        "github.com/ksatchit/sample-chaos-exporter/pkg/util"
+)
 
 var (
     experimentsTotal = prometheus.NewGaugeVec(prometheus.GaugeOpts{
@@ -105,6 +105,10 @@ func init() {
         // Get cluster configuration
         var kubeconfig *string 
 
+        // Get app details & chaoengine name from ENV
+        app_uuid := os.Getenv("APP_UUID")
+        chaosengine := os.Getenv("CHAOSENGINE")
+
         if home := homedir.HomeDir(); home != ""  {
                 kubeconfig = flag.String("kubeconfig", filepath.Join(home, ".kube", "config"), "(optional) path to the kubeconfig file")
         } else {
@@ -128,12 +132,17 @@ func init() {
                 panic(err.Error())
         }
 
-        if chaosengine == "" || application_uuid == "" {
-               log.Printf("ERROR: please specify correct ENVs, exiting")
+        if chaosengine == "" || app_uuid == "" {
+               log.Printf("ERROR: please specify correct APP_UUID & CHAOSENGINE ENVs")
                os.Exit(1)
         }
 
-        expTotal, passTotal, failTotal, expMap, err := scrapeCR.GetChaosMetrics(config, chaosengine)
+        expTotal, passTotal, failTotal, expMap, err := util.GetChaosMetrics(config, chaosengine)
+        if err != nil {
+                panic(err.Error())
+        }
+
+        fmt.Printf("%s", expMap)
 
 	prometheus.MustRegister(experimentsTotal)
 	prometheus.MustRegister(passedExperiments)
@@ -145,13 +154,13 @@ func init() {
 
 
         // Set default metrics for debug purposes
-        experimentsTotal.WithLabelValues(application_uuid).Set(expTotal)
-        passedExperiments.WithLabelValues(application_uuid).Set(passTotal)
-        failedExperiments.WithLabelValues(application_uuid).Set(failTotal)
-        //podFailureStatus.WithLabelValues(application_uuid).Set(3) //pass
-        //containerKillStatus.WithLabelValues(application_uuid).Set(2) //fail
-        //containerNetworkDelay.WithLabelValues(application_uuid).Set(1) //running 
-        //containerPacketLoss.WithLabelValues(application_uuid).Set(0) //not-started
+        experimentsTotal.WithLabelValues(app_uuid).Set(expTotal)
+        passedExperiments.WithLabelValues(app_uuid).Set(passTotal)
+        failedExperiments.WithLabelValues(app_uuid).Set(failTotal)
+        //podFailureStatus.WithLabelValues(app_uuid).Set(3) //pass
+        //containerKillStatus.WithLabelValues(app_uuid).Set(2) //fail
+        //containerNetworkDelay.WithLabelValues(app_uuid).Set(1) //running 
+        //containerPacketLoss.WithLabelValues(app_uuid).Set(0) //not-started
 
 }
 
