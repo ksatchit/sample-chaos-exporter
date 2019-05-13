@@ -74,3 +74,4 @@ c_exp_engine_nginx_pod_failure{app_uid="3f2092f8-6400-11e9-905f-42010a800131"} 3
 
 - Rethink metric types for status 
 - Add more labels
+- Design an overall application resilience metric which is derived based on test run results 
