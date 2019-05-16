@@ -2,6 +2,7 @@ package util
 
 import (
     "fmt"
+    "strings"
     "k8s.io/client-go/kubernetes/scheme"
     "k8s.io/client-go/rest"
     _ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
@@ -27,13 +28,17 @@ var numericstatus = map[string]float64{
          "pass":         3,
 }
 
+// Holds Error type
+var err error
+
 // Utility fn to return numeric value for a result 
 func statusConv (expstatus string)(numeric float64){
     if numeric, ok := numericstatus[expstatus]; ok {
         return numeric
         fmt.Printf("%v", numeric)
     }
-    return 127
+    //return 127
+    return 0
 }
 
 /* Exported function to gather chaos metrics
@@ -69,14 +74,20 @@ func GetChaosMetrics(cfg *rest.Config, cEngine string)(totalExpCount, totalPasse
     // Initialize the chaosresult map before entering loop
     chaosresultmap := make(map[string]string)
 
+    // Set default values on the chaosresult map before populating w/ actual values
+    //for _, test:= range chaosexperimentlist{
+
     for _, test:= range chaosexperimentlist{
         chaosresultname := fmt.Sprintf("%s-%s", cEngine, test)
         testresultdump, err:= clientSet.ChaosResults("default").Get(chaosresultname, metav1.GetOptions{})
-        result := testresultdump.Spec.ExperimentStatus.Verdict
         if err != nil {
-            return 0, 0, 0, nil, err
+            if strings.Contains(err.Error(), "not found"){
+                // lack of result cr indicates experiment not executed
+                chaosresultmap[chaosresultname] = "not-executed"
+            }
+            //return 0, 0, 0, nil, err
         }
-
+        result := testresultdump.Spec.ExperimentStatus.Verdict
         chaosresultmap[chaosresultname] = result
     }
 
@@ -94,7 +105,7 @@ func GetChaosMetrics(cfg *rest.Config, cEngine string)(totalExpCount, totalPasse
     totalPassedExp = float64(pcount)               //
     totalFailedExp = float64(fcount)               //
     /////////////////////////////////////////////////
-    fmt.Printf("%+v %+v %+v\n", totalExpCount, totalPassedExp, totalFailedExp)
+    //fmt.Printf("%+v %+v %+v\n", totalExpCount, totalPassedExp, totalFailedExp)
 
     //Map verdict to numerical values {0-notstarted, 1-running, 2-fail, 3-pass}
     statusmap := make(map[string]float64)
