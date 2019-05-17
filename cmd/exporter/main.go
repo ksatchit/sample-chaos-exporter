@@ -39,7 +39,7 @@ import (
 var kubeconfig string
 var config *rest.Config
 var err error
-var app_uuid, chaosengine, experiments string
+var app_uuid, chaosengine string
 var s_expResultMetricList  []string
 var registeredResultMetrics []string
 
@@ -132,7 +132,6 @@ func main(){
     // Get app details & chaoengine name from ENV 
     app_uuid := os.Getenv("APP_UUID")
     chaosengine := os.Getenv("CHAOSENGINE")
-    experiments := os.Getenv("EXPERIMENTS")
 
     flag.StringVar(&kubeconfig, "kubeconfig", "", "path to the kubeconfig file")
     flag.Parse()
@@ -151,7 +150,7 @@ func main(){
     }
 
     // Validate availability of mandatory ENV
-    if chaosengine == "" || app_uuid == "" || experiments == "" {
+    if chaosengine == "" || app_uuid == "" {
         log.Fatal("ERROR: please specify correct APP_UUID & CHAOSENGINE ENVs")
         os.Exit(1)
     }
